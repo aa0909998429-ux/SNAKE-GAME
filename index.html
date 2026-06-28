@@ -1,0 +1,2970 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐍 農莊貪食蛇大作戰</title>
+  <meta name="description" content="在美麗的農莊中與電腦對戰的貪食蛇遊戲！選擇你的蛇顏色，收集道具，挑戰越來越快的電腦蛇！">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(135deg, #1a472a 0%, #2d5a3f 30%, #1a3a2a 60%, #0f2a1a 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ===== 選單畫面 ===== */
+    #menu-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 40px;
+      background: rgba(20, 60, 30, 0.85);
+      border-radius: 24px;
+      border: 3px solid rgba(139, 90, 43, 0.7);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      animation: fadeIn 0.8s ease-out;
+      max-width: 520px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .game-title {
+      font-size: 42px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffd700, #ffaa00, #ff8c00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .game-title .emoji {
+      -webkit-text-fill-color: initial;
+      font-size: 48px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .section-label {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffd700;
+      margin-bottom: 8px;
+    }
+
+    .color-picker-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .color-option {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      justify-self: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .color-option::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 9px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent);
+    }
+
+    .color-option:hover {
+      transform: scale(1.15);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .color-option.selected {
+      border-color: #ffd700;
+      transform: scale(1.2);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+
+    .snake-preview {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 12px 20px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      min-height: 50px;
+    }
+
+    .preview-segment {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      transition: background-color 0.3s;
+    }
+
+    .preview-head {
+      position: relative;
+    }
+
+    .preview-crown {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+    }
+
+    .instructions {
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      padding: 16px 20px;
+      width: 100%;
+      font-size: 13px;
+      line-height: 1.8;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .instructions h3 {
+      color: #ffd700;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .instructions kbd {
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .btn {
+      padding: 14px 48px;
+      font-size: 20px;
+      font-weight: 700;
+      font-family: inherit;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #1a1a1a;
+      box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(255, 140, 0, 0.6);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* ===== 遊戲畫面 ===== */
+    #game-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    #hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 900px;
+      max-width: 95vw;
+      padding: 10px 20px;
+      background: rgba(20, 50, 30, 0.9);
+      border-radius: 16px 16px 0 0;
+      border: 2px solid rgba(139, 90, 43, 0.5);
+      border-bottom: none;
+      backdrop-filter: blur(10px);
+      font-size: 15px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hud-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+    }
+
+    .hud-value {
+      font-weight: 700;
+      color: #ffd700;
+      font-size: 16px;
+    }
+
+    #active-effects {
+      display: flex;
+      gap: 6px;
+    }
+
+    .effect-badge {
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .effect-speed { background: rgba(0, 200, 255, 0.3); color: #00c8ff; border: 1px solid rgba(0,200,255,0.5); }
+    .effect-invincible { background: rgba(255, 215, 0, 0.3); color: #ffd700; border: 1px solid rgba(255,215,0,0.5); }
+    .effect-freeze { background: rgba(100, 180, 255, 0.3); color: #64b4ff; border: 1px solid rgba(100,180,255,0.5); }
+    .effect-slow { background: rgba(180, 100, 255, 0.3); color: #b464ff; border: 1px solid rgba(180,100,255,0.5); }
+
+    #gameCanvas {
+      display: block;
+      border: 3px solid rgba(139, 90, 43, 0.7);
+      border-top: none;
+      border-radius: 0 0 16px 16px;
+      max-width: 95vw;
+      cursor: none;
+    }
+
+    /* ===== 遊戲結束畫面 ===== */
+    #gameover-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: 40px;
+      background: rgba(20, 20, 20, 0.92);
+      border-radius: 24px;
+      border: 3px solid rgba(255, 60, 60, 0.5);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      backdrop-filter: blur(20px);
+      animation: fadeIn 0.6s ease-out;
+      max-width: 460px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .gameover-title {
+      font-size: 38px;
+      font-weight: 900;
+      color: #ff4444;
+      text-shadow: 0 0 20px rgba(255, 60, 60, 0.4);
+    }
+
+    .gameover-cause {
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 900;
+      color: #ffd700;
+    }
+
+    .btn-restart {
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: white;
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+
+    .btn-restart:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(76, 175, 80, 0.6);
+    }
+
+    .btn-menu {
+      background: rgba(255,255,255,0.1);
+      color: #ccc;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .btn-menu:hover {
+      background: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+    }
+
+    /* ===== 暫停覆蓋 ===== */
+    #pause-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .pause-text {
+      font-size: 48px;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+
+    .pause-hint {
+      font-size: 16px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* ===== 手機控制按鈕 ===== */
+    #mobile-controls {
+      display: none;
+      margin-top: 16px;
+      gap: 8px;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-areas:
+        ". up ."
+        "left . right"
+        ". down .";
+      gap: 6px;
+    }
+
+    .dpad-btn {
+      width: 56px;
+      height: 56px;
+      border: none;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .dpad-btn:active { background: rgba(255,215,0,0.4); }
+    .dpad-up { grid-area: up; }
+    .dpad-down { grid-area: down; }
+    .dpad-left { grid-area: left; }
+    .dpad-right { grid-area: right; }
+
+    /* 手機適配 */
+    @media (max-width: 768px) {
+      .game-title { font-size: 28px; }
+      #menu-screen { padding: 24px; gap: 16px; }
+      .color-grid { gap: 8px; }
+      .color-option { width: 36px; height: 36px; }
+      #hud { font-size: 12px; padding: 6px 12px; }
+      .hud-item { padding: 3px 8px; }
+      #mobile-controls { display: grid; }
+    }
+
+    @media (pointer: coarse) {
+      #mobile-controls { display: grid; }
+    }
+
+    /* 模式選擇按鈕 */
+    .mode-selector { width: 100%; }
+    .mode-btn {
+      padding: 10px 16px;
+      font-size: 15px;
+      border: 2px solid rgba(255,215,0,0.3);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.7);
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .mode-btn:hover { background: rgba(255,215,0,0.15); }
+    .mode-btn.selected {
+      background: rgba(255,215,0,0.2);
+      border-color: #ffd700;
+      color: #ffd700;
+      box-shadow: 0 0 12px rgba(255,215,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- ===== 選單畫面 ===== -->
+    <div id="menu-screen">
+      <div class="game-title">
+        <span class="emoji">🐍</span><br>
+        農莊貪食蛇大作戰
+      </div>
+      <p class="subtitle">
+        在美麗的農莊中對戰！<br>
+        收集食物、獲取道具、存活越久越刺激！
+      </p>
+
+      <div style="display:flex; justify-content:space-between; width:100%; align-items:center; background:rgba(0,0,0,0.3); padding:10px 20px; border-radius:12px;">
+        <span style="font-size:1.2rem; font-weight:bold;">💰 金幣：<span id="menuTotalCoins">0</span></span>
+        <button class="btn mode-btn" onclick="openShop()" style="margin:0; padding:8px 16px;">🛒 造型商店</button>
+      </div>
+
+      <!-- 模式選擇 -->
+      <div class="mode-selector">
+        <div class="section-label">🕹️ 遊戲模式</div>
+        <div style="display:flex; gap:12px; width:100%;">
+          <button class="btn mode-btn selected" id="mode1P" onclick="selectMode('1p')" style="flex:1;">🤖 單人 vs 電腦</button>
+          <button class="btn mode-btn" id="mode2P" onclick="selectMode('2p')" style="flex:1;">👥 雙人對戰</button>
+        </div>
+      </div>
+
+      <div class="color-picker-section">
+        <div class="section-label">👑 <span id="colorPickerLabel">選擇你的蛇顏色</span></div>
+        <div class="color-grid" id="colorGrid"></div>
+        <div class="snake-preview" id="snakePreview"></div>
+      </div>
+
+      <!-- 玩家2 顏色選擇 (雙人模式時顯示) -->
+      <div class="color-picker-section" id="p2ColorSection" style="display:none;">
+        <div class="section-label">⭐ 玩家 2 選擇蛇顏色</div>
+        <div class="color-grid" id="colorGrid2"></div>
+        <div class="snake-preview" id="snakePreview2"></div>
+      </div>
+
+      <div class="instructions">
+        <h3>📖 遊戲說明</h3>
+        <b>🎮 玩家 1 操控：</b><br>
+        ⌨️ <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> (單人模式可用方向鍵) / 🖱️ 滑鼠 / 🎮 手把<br>
+        <b id="p2ControlHint" style="display:none;">⭐ 玩家 2 操控：</b><br>
+        <span id="p2ControlKeys" style="display:none;">⌨️ <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> (方向鍵)</span><br>
+        <br>
+        ⏸️ 按 <kbd>空白鍵</kbd> 或 <kbd>P</kbd> 暫停遊戲<br>
+        🍎 吃食物讓蛇變長得分<br>
+        ⚡ 收集道具獲得特殊能力<br>
+        <span id="instAI1">🐍 <span style="color:#ffd700;font-weight:700">金色蛇</span>是電腦蛇，碰到就會輸！<br></span>
+        <span id="instAI2">⏰ 時間越久電腦蛇越快，加油！<br></span>
+        <span id="inst2P" style="display:none; color:#ffcc00; font-weight:bold;">⚔️ 本模式無電腦蛇，雙方對戰，頭碰到對方的身體就會輸！<br></span>
+        🧱 碰到邊界或自己的身體也會輸
+      </div>
+
+      <div class="instructions" style="margin-top:15px; padding:10px;">
+        <h3 style="margin:0 0 10px 0; font-size:1.1rem; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:5px;">🏆 歷史最高分</h3>
+        <div style="display:flex; justify-content:space-between;">
+          <div style="flex:1;">
+            <b style="color:#ffd700">單人模式</b>
+            <ol id="lb-1p-list" style="margin:5px 0 0 15px; padding:0; font-size:0.9rem; color:#ccc;"></ol>
+          </div>
+          <div style="flex:1;">
+            <b style="color:#ffd700">雙人模式</b>
+            <ol id="lb-2p-list" style="margin:5px 0 0 15px; padding:0; font-size:0.9rem; color:#ccc;"></ol>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="btnStart" onclick="startGame()">🎮 開始遊戲</button>
+    </div>
+
+    <!-- ===== 遊戲畫面 ===== -->
+    <div id="game-screen">
+      <div id="hud">
+        <div class="hud-item">👑 <span class="hud-value" id="hudP1Label">P1</span>: <span class="hud-value" id="hudScore">0</span>分 | 📏<span class="hud-value" id="hudLength">3</span></div>
+        <div class="hud-item" id="hudP2Row" style="display:none;">⭐ <span class="hud-value" id="hudP2Label">P2</span>: <span class="hud-value" id="hudP2Score">0</span>分 | 📏<span class="hud-value" id="hudP2Length">3</span></div>
+        <div class="hud-item">💰 <span class="hud-value" id="hudCoins">0</span></div>
+        <div class="hud-item">⏱️ <span class="hud-value" id="hudTime">0:00</span></div>
+        <div class="hud-item" id="hudAIRow">🤖 AI: <span class="hud-value" id="hudAISpeed">1.0x</span></div>
+        <div id="active-effects"></div>
+      </div>
+      <canvas id="gameCanvas" width="900" height="600"></canvas>
+      <div id="mobile-controls">
+        <div class="dpad">
+          <button class="dpad-btn dpad-up" onclick="setDirection(0,-1)">▲</button>
+          <button class="dpad-btn dpad-left" onclick="setDirection(-1,0)">◀</button>
+          <button class="dpad-btn dpad-right" onclick="setDirection(1,0)">▶</button>
+          <button class="dpad-btn dpad-down" onclick="setDirection(0,1)">▼</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 遊戲結束畫面 ===== -->
+    <div id="gameover-screen">
+      <div class="gameover-title" id="gameoverTitle">💀 遊戲結束</div>
+      <div class="gameover-cause" id="gameoverCause"></div>
+      <!-- 雙人模式贏家 -->
+      <div id="winnerBanner" style="display:none; font-size:28px; font-weight:900; margin:8px 0; padding:12px 24px; border-radius:16px; background:rgba(255,215,0,0.2); border:2px solid #ffd700;"></div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">👑 P1 分數</span>
+          <span class="stat-value" id="finalScore">0</span>
+        </div>
+        <div class="stat-card" id="finalP2Card" style="display:none;">
+          <span class="stat-label">⭐ P2 分數</span>
+          <span class="stat-value" id="finalP2Score">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">💰 金幣收集</span>
+          <span class="stat-value" id="finalCoins">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">📏 最長長度</span>
+          <span class="stat-value" id="finalLength">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">⏱️ 存活時間</span>
+          <span class="stat-value" id="finalTime">0:00</span>
+        </div>
+      </div>
+      <button class="btn btn-restart" onclick="startGame()">🔄 再玩一次</button>
+      <button class="btn btn-menu" onclick="showMenu()">🏠 回主選單</button>
+    </div>
+
+    <!-- ===== 商店畫面 ===== -->
+    <div id="shop-screen" style="display:none; flex-direction:column; align-items:center; gap:24px; padding:40px; background:rgba(20,60,30,0.95); border-radius:24px; border:3px solid #ffd700; max-width:600px; width:90%; max-height:90vh; overflow-y:auto; position:absolute; z-index:1000; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+      <h2 style="font-size:2rem; color:#ffd700; text-shadow:0 2px 4px rgba(0,0,0,0.5);">🛒 造型商店</h2>
+      <div style="font-size:1.5rem; font-weight:bold;">💰 目前金幣：<span id="shopTotalCoins">0</span></div>
+      <div id="shopItems" style="display:flex; flex-direction:column; gap:16px; width:100%;">
+        <!-- 動態產生商店項目 -->
+      </div>
+      <button class="btn btn-primary" onclick="closeShop()">❌ 離開商店</button>
+    </div>
+
+    <!-- ===== 暫停覆蓋 ===== -->
+    <div id="pause-overlay">
+      <div class="pause-text">⏸️ 遊戲暫停</div>
+      <div class="pause-hint">按 <kbd>空白鍵</kbd> 或 <kbd>P</kbd> 繼續</div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    //  🐍 農莊貪食蛇大作戰 - 完整遊戲邏輯 v2.0
+    //  修復: 按鍵操作精準度 + AI 智能大幅提升
+    // =========================================================
+
+    // ===== 遊戲配置 =====
+    const COLS = 30;
+    const ROWS = 20;
+    const CELL = 30;  // 每格像素
+    const CANVAS_W = COLS * CELL; // 900
+    const CANVAS_H = ROWS * CELL; // 600
+
+    // 方向常數
+    const DIR = {
+      UP:    { x: 0,  y: -1 },
+      DOWN:  { x: 0,  y: 1 },
+      LEFT:  { x: -1, y: 0 },
+      RIGHT: { x: 1,  y: 0 }
+    };
+    const ALL_DIRS = [DIR.UP, DIR.DOWN, DIR.LEFT, DIR.RIGHT];
+
+    // 可選顏色
+    const SNAKE_COLORS = [
+      '#22c55e', '#10b981', '#06b6d4', '#3b82f6',
+      '#8b5cf6', '#ec4899', '#ef4444', '#f97316',
+      '#eab308', '#84cc16', '#14b8a6', '#f43f5e'
+    ];
+
+    // 道具類型定義
+    const POWERUP_TYPES = {
+      SPEED:      { emoji: '⚡', name: '加速',   color: '#00c8ff', duration: 5000, cssClass: 'effect-speed' },
+      INVINCIBLE: { emoji: '🛡️', name: '無敵',   color: '#ffd700', duration: 6000, cssClass: 'effect-invincible' },
+      COIN:       { emoji: '💰', name: '金幣',   color: '#ffd700', duration: 0,    cssClass: '' },
+      FREEZE:     { emoji: '❄️', name: '冰凍敵人', color: '#64b4ff', duration: 4000, cssClass: 'effect-freeze' },
+      SLOW:       { emoji: '🐌', name: '減速敵人', color: '#b464ff', duration: 5000, cssClass: 'effect-slow' },
+    };
+
+    // 食物類型
+    const FOOD_TYPES = [
+      { emoji: '🍎', name: '蘋果', points: 10 },
+      { emoji: '🥕', name: '胡蘿蔔', points: 10 },
+      { emoji: '🌽', name: '玉米', points: 15 },
+      { emoji: '🍇', name: '葡萄', points: 15 },
+      { emoji: '🍓', name: '草莓', points: 20 },
+    ];
+
+    // ===== 商店資料 =====
+    const SHOP_ITEMS = [
+      { id: 'rainbow', name: '🌈 彩虹漸層', price: 50, desc: '七彩變換的絢麗蛇身' },
+      { id: 'ghost', name: '👻 幽靈半透明', price: 100, desc: '半透明的幽靈外觀' },
+      { id: 'cyberpunk', name: '⚡ 賽博龐克', price: 150, desc: '高對比霓虹發光' },
+      { id: 'pterodactyl', name: '🦖 飛天翼龍', price: 200, desc: '遠古巨獸的霸氣造型' },
+      { id: 'pegasus', name: '🦄 爆裂天馬', price: 250, desc: '光芒四射的華麗天馬' },
+      { id: 'fire', name: '🔥 爆裂火焰', price: 300, desc: '燃燒殆盡的烈焰之魂' },
+      { id: 'galaxy', name: '🌌 星空宇宙', price: 400, desc: '深邃宇宙的繁星點點' },
+      { id: 'thunder', name: '🌩️ 雷霆風暴', price: 500, desc: '閃電交加的雷暴之力' }
+    ];
+
+    let totalCoins = parseInt(localStorage.getItem('snakeTotalCoins')) || 0;
+    let unlockedSkins = JSON.parse(localStorage.getItem('snakeUnlockedSkins')) || [];
+    let selectedSkin1 = localStorage.getItem('snakeSelectedSkin1') || null;
+    let selectedSkin2 = localStorage.getItem('snakeSelectedSkin2') || null;
+
+    function saveShopData() {
+      localStorage.setItem('snakeTotalCoins', totalCoins.toString());
+      localStorage.setItem('snakeUnlockedSkins', JSON.stringify(unlockedSkins));
+      if (selectedSkin1) localStorage.setItem('snakeSelectedSkin1', selectedSkin1);
+      else localStorage.removeItem('snakeSelectedSkin1');
+      if (selectedSkin2) localStorage.setItem('snakeSelectedSkin2', selectedSkin2);
+      else localStorage.removeItem('snakeSelectedSkin2');
+      updateMenuCoins();
+      setupColorPicker();
+      if (gameMode === '2p') setupP2ColorPicker();
+    }
+
+    function updateMenuCoins() {
+      const elMenu = document.getElementById('menuTotalCoins');
+      const elShop = document.getElementById('shopTotalCoins');
+      if (elMenu) elMenu.textContent = totalCoins;
+      if (elShop) elShop.textContent = totalCoins;
+    }
+
+    function openShop() {
+      document.getElementById('shop-screen').style.display = 'flex';
+      renderShopItems();
+    }
+
+    function closeShop() {
+      document.getElementById('shop-screen').style.display = 'none';
+      saveShopData(); // 同步更新預覽和選單
+    }
+
+    function buySkin(id, price) {
+      if (totalCoins >= price && !unlockedSkins.includes(id)) {
+        playSound('buy');
+        totalCoins -= price;
+        unlockedSkins.push(id);
+        saveShopData();
+        renderShopItems();
+      } else if (totalCoins < price) {
+        alert('金幣不足！快去遊戲中收集金幣吧！💰');
+      }
+    }
+
+    function renderShopItems() {
+      const container = document.getElementById('shopItems');
+      container.innerHTML = '';
+      SHOP_ITEMS.forEach(item => {
+        const isUnlocked = unlockedSkins.includes(item.id);
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        div.style.background = 'rgba(0,0,0,0.5)';
+        div.style.padding = '12px 20px';
+        div.style.borderRadius = '12px';
+        div.style.border = isUnlocked ? '2px solid #22c55e' : '2px solid #555';
+
+        const info = document.createElement('div');
+        info.innerHTML = `<div style="font-size:1.2rem; font-weight:bold;">${item.name}</div><div style="font-size:0.9rem; color:#aaa;">${item.desc}</div>`;
+        div.appendChild(info);
+
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        if (isUnlocked) {
+          btn.textContent = '✅ 已擁有';
+          btn.style.background = '#22c55e';
+          btn.style.padding = '8px 16px';
+          btn.style.fontSize = '1rem';
+        } else {
+          btn.textContent = `💰 ${item.price} 購買`;
+          btn.style.background = totalCoins >= item.price ? '#eab308' : '#555';
+          btn.style.padding = '8px 16px';
+          btn.style.fontSize = '1rem';
+          btn.onclick = () => buySkin(item.id, item.price);
+        }
+        div.appendChild(btn);
+        container.appendChild(div);
+      });
+    }
+
+    // ===== 遊戲狀態 =====
+    let canvas, ctx;
+    let bgCanvas, bgCtx;  // 預渲染背景
+    let selectedColor = SNAKE_COLORS[0];
+    let gameState = 'menu';  // menu | countdown | playing | paused | gameover
+    let animFrameId;
+
+    // 遊戲物件
+    let player, ai;
+    let player2 = null;  // 玩家2 (雙人模式)
+    let gameMode = '1p'; // '1p' | '2p'
+    let selectedColor2 = '#3b82f6'; // 玩家2 預設顏色
+    let foods = [];
+    let powerups = [];
+    let particles = [];
+    let effects = {};  // 當前生效的效果
+
+    // 計分
+    let score = 0;
+    let score2 = 0;  // 玩家2 分數
+    let coins = 0;
+    let maxLength = 3;
+    let gameTime = 0;
+    let lastTimestamp = 0;
+    let deathCause = '';
+    let winner = '';  // 雙人模式的贏家
+
+    // AI 難度
+    let aiSpeedMultiplier = 1.0;
+    let aiBaseInterval = 160;  // AI 基礎移動間隔(毫秒)
+
+    // ====================================================
+    //  [修復 #1] 改良後的移動計時系統
+    //  - 降低基礎間隔 130→100ms，操作更靈敏
+    //  - 使用 2 元素方向緩衝 (取代 3 元素隊列)
+    //  - 按鍵時若已過 50% 間隔，立即觸發移動
+    // ====================================================
+    let playerMoveTimer = 0;
+    let aiMoveTimer = 0;
+    let p2MoveTimer = 0;   // 玩家2 移動計時
+    let playerMoveInterval = 100;
+    let playerMovedThisTick = false;
+    let p2MovedThisTick = false;  // 玩家2 本 tick 是否已移動
+
+    // 倒數計時
+    let countdownValue = 3;
+    let countdownTimer = 0;
+
+    // 道具生成計時
+    let powerupSpawnTimer = 0;
+    const POWERUP_SPAWN_INTERVAL = 6000;
+
+    // 食物數量
+    const MAX_FOODS = 5;
+
+    // 裝飾元素
+    let decorations = [];
+
+    // AI 行為追蹤
+    let aiHuntMode = false;     // AI 是否在追獵玩家
+    let aiHuntTimer = 0;        // 追獵模式計時器
+    let aiCachedPath = null;    // AI 快取的 BFS 路徑
+    let aiPathRecalcTimer = 0;  // 路徑重新計算計時器
+    let aiHuntCycleTimer = 0;   // 定時追獵計時器 (每 10 秒追獵一次)
+    const HUNT_CYCLE_INTERVAL = 10000; // 10 秒一次定時追獵
+    const HUNT_DURATION = 4000; // 每次追獵持續 4 秒
+
+    // ===== 音效引擎 (Web Audio API) =====
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    let isMuted = false;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (!audioCtx || isMuted) return;
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+      switch (type) {
+        case 'eat':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+          break;
+        case 'coin':
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(800, now);
+          osc.frequency.setValueAtTime(1200, now + 0.05);
+          gainNode.gain.setValueAtTime(0.1, now);
+          gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+          break;
+        case 'powerup':
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.linearRampToValueAtTime(800, now + 0.3);
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+          break;
+        case 'hit':
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+          break;
+        case 'gameover':
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(200, now);
+          osc.frequency.linearRampToValueAtTime(50, now + 1);
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.linearRampToValueAtTime(0, now + 1);
+          osc.start(now);
+          osc.stop(now + 1);
+          break;
+        case 'buy':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.setValueAtTime(800, now + 0.1);
+          osc.frequency.setValueAtTime(1200, now + 0.2);
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+          break;
+        case 'click':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          gainNode.gain.setValueAtTime(0.1, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+          osc.start(now);
+          osc.stop(now + 0.05);
+          break;
+      }
+    }
+
+    // ===== 震動與停頓 (Juice) =====
+    let screenShakeTime = 0;
+    let screenShakeMagnitude = 0;
+    let hitstopTime = 0;
+
+    function applyScreenShake(duration, magnitude) {
+      screenShakeTime = duration;
+      screenShakeMagnitude = magnitude;
+    }
+
+    function applyHitstop(duration) {
+      hitstopTime = duration;
+    }
+
+    // ===== 排行榜系統 =====
+    let leaderboards = JSON.parse(localStorage.getItem('snakeLeaderboards')) || { '1p': [], '2p': [] };
+    
+    function saveLeaderboard(mode, newScore) {
+      if (!leaderboards[mode]) leaderboards[mode] = [];
+      leaderboards[mode].push(Math.floor(newScore));
+      leaderboards[mode].sort((a, b) => b - a);
+      leaderboards[mode] = leaderboards[mode].slice(0, 5); // 保留前五名
+      localStorage.setItem('snakeLeaderboards', JSON.stringify(leaderboards));
+      return leaderboards[mode][0] === Math.floor(newScore); // 回傳是否打破紀錄
+    }
+
+    function renderLeaderboard() {
+      const p1List = document.getElementById('lb-1p-list');
+      const p2List = document.getElementById('lb-2p-list');
+      if (p1List) {
+        p1List.innerHTML = leaderboards['1p'].length ? leaderboards['1p'].map(s => `<li>${s} 分</li>`).join('') : '<li style="color:#666">暫無紀錄</li>';
+      }
+      if (p2List) {
+        p2List.innerHTML = leaderboards['2p'].length ? leaderboards['2p'].map(s => `<li>${s} 分</li>`).join('') : '<li style="color:#666">暫無紀錄</li>';
+      }
+    }
+
+    // ===== 初始化 =====
+    function init() {
+      renderLeaderboard();
+      canvas = document.getElementById('gameCanvas');
+      ctx = canvas.getContext('2d');
+      canvas.width = CANVAS_W;
+      canvas.height = CANVAS_H;
+
+      // 預渲染背景
+      bgCanvas = document.createElement('canvas');
+      bgCanvas.width = CANVAS_W;
+      bgCanvas.height = CANVAS_H;
+      bgCtx = bgCanvas.getContext('2d');
+
+      setupColorPicker();
+      setupP2ColorPicker();
+      setupKeyboardInput();
+      setupTouchInput();
+      setupMouseInput();
+      setupGamepadInput();
+    }
+
+    // ===== 模式選擇 =====
+    function selectMode(mode) {
+      gameMode = mode;
+      document.getElementById('mode1P').classList.toggle('selected', mode === '1p');
+      document.getElementById('mode2P').classList.toggle('selected', mode === '2p');
+
+      // 顯示/隱藏玩家2顏色選擇與說明
+      document.getElementById('p2ColorSection').style.display = mode === '2p' ? 'flex' : 'none';
+      document.getElementById('p2ControlHint').style.display = mode === '2p' ? 'inline' : 'none';
+      document.getElementById('p2ControlKeys').style.display = mode === '2p' ? 'inline' : 'none';
+      
+      document.getElementById('instAI1').style.display = mode === '2p' ? 'none' : 'inline';
+      document.getElementById('instAI2').style.display = mode === '2p' ? 'none' : 'inline';
+      document.getElementById('inst2P').style.display = mode === '2p' ? 'inline' : 'none';
+
+      // 更新標題
+      document.getElementById('colorPickerLabel').textContent = mode === '2p' ? '玩家 1 選擇蛇顏色' : '選擇你的蛇顏色';
+    }
+
+    // ===== 顏色與造型選擇器 =====
+    function setupColorPicker() {
+      const grid = document.getElementById('colorGrid');
+      grid.innerHTML = '';
+      
+      // 基本顏色
+      SNAKE_COLORS.forEach((color, i) => {
+        const div = document.createElement('div');
+        div.className = 'color-option' + (!selectedSkin1 && selectedColor === color ? ' selected' : '');
+        div.style.background = color;
+        div.onclick = () => {
+          selectedSkin1 = null;
+          selectedColor = color;
+          grid.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
+          div.classList.add('selected');
+          updateSnakePreview();
+          saveShopData();
+        };
+        grid.appendChild(div);
+      });
+
+      // 已解鎖造型
+      unlockedSkins.forEach(skinId => {
+        const skin = SHOP_ITEMS.find(item => item.id === skinId);
+        if (skin) {
+          const div = document.createElement('div');
+          div.className = 'color-option' + (selectedSkin1 === skinId ? ' selected' : '');
+          div.style.background = '#333';
+          div.style.border = '2px dashed #ffd700';
+          div.innerHTML = skin.name.split(' ')[0]; // 取 Emoji
+          div.style.display = 'flex';
+          div.style.justifyContent = 'center';
+          div.style.alignItems = 'center';
+          div.style.fontSize = '1.2rem';
+          div.onclick = () => {
+            selectedSkin1 = skinId;
+            grid.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
+            div.classList.add('selected');
+            updateSnakePreview();
+            saveShopData();
+          };
+          grid.appendChild(div);
+        }
+      });
+      updateSnakePreview();
+    }
+
+    function updateSnakePreview() {
+      const preview = document.getElementById('snakePreview');
+      preview.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'preview-segment' + (i === 0 ? ' preview-head' : '');
+        
+        if (selectedSkin1) {
+          seg.style.background = '#ffd700'; // 造型的預設預覽底色
+          seg.style.border = '1px solid #fff';
+        } else {
+          seg.style.background = selectedColor;
+          seg.style.opacity = 1 - i * 0.12;
+        }
+
+        if (i === 0) {
+          const crown = document.createElement('span');
+          crown.className = 'preview-crown';
+          crown.textContent = selectedSkin1 ? SHOP_ITEMS.find(s=>s.id===selectedSkin1)?.name.split(' ')[0] : '👑';
+          seg.appendChild(crown);
+        }
+        preview.appendChild(seg);
+      }
+    }
+
+    // ===== 玩家2 顏色與造型選擇器 =====
+    function setupP2ColorPicker() {
+      const grid = document.getElementById('colorGrid2');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      // 基本顏色
+      SNAKE_COLORS.forEach((color, i) => {
+        const div = document.createElement('div');
+        const isSelectedColor = !selectedSkin2 && (selectedColor2 === color || (!selectedColor2 && i===3));
+        div.className = 'color-option' + (isSelectedColor ? ' selected' : '');
+        div.style.background = color;
+        div.onclick = () => {
+          selectedSkin2 = null;
+          selectedColor2 = color;
+          grid.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
+          div.classList.add('selected');
+          updateP2Preview();
+          saveShopData();
+        };
+        grid.appendChild(div);
+      });
+
+      // 已解鎖造型
+      unlockedSkins.forEach(skinId => {
+        const skin = SHOP_ITEMS.find(item => item.id === skinId);
+        if (skin) {
+          const div = document.createElement('div');
+          div.className = 'color-option' + (selectedSkin2 === skinId ? ' selected' : '');
+          div.style.background = '#333';
+          div.style.border = '2px dashed #3b82f6';
+          div.innerHTML = skin.name.split(' ')[0]; // 取 Emoji
+          div.style.display = 'flex';
+          div.style.justifyContent = 'center';
+          div.style.alignItems = 'center';
+          div.style.fontSize = '1.2rem';
+          div.onclick = () => {
+            selectedSkin2 = skinId;
+            grid.querySelectorAll('.color-option').forEach(e => e.classList.remove('selected'));
+            div.classList.add('selected');
+            updateP2Preview();
+            saveShopData();
+          };
+          grid.appendChild(div);
+        }
+      });
+      updateP2Preview();
+    }
+
+    function updateP2Preview() {
+      const preview = document.getElementById('snakePreview2');
+      if (!preview) return;
+      preview.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'preview-segment' + (i === 0 ? ' preview-head' : '');
+        
+        if (selectedSkin2) {
+          seg.style.background = '#3b82f6'; // 造型的預設預覽底色
+          seg.style.border = '1px solid #fff';
+        } else {
+          seg.style.background = selectedColor2;
+          seg.style.opacity = 1 - i * 0.12;
+        }
+
+        if (i === 0) {
+          const crown = document.createElement('span');
+          crown.className = 'preview-crown';
+          crown.textContent = selectedSkin2 ? SHOP_ITEMS.find(s=>s.id===selectedSkin2)?.name.split(' ')[0] : '⭐';
+          seg.appendChild(crown);
+        }
+        preview.appendChild(seg);
+      }
+    }
+
+    // ====================================================
+    //  輸入系統
+    // ====================================================
+    let directionBuffer = []; // P1 最多 2 個元素
+    let p2DirectionBuffer = []; // P2 方向緩衝
+
+    function setupKeyboardInput() {
+      document.addEventListener('keydown', (e) => {
+        if (gameState === 'playing') {
+          switch (e.code) {
+            case 'KeyW': e.preventDefault(); bufferDirection(DIR.UP);    break;
+            case 'KeyS': e.preventDefault(); bufferDirection(DIR.DOWN);  break;
+            case 'KeyA': e.preventDefault(); bufferDirection(DIR.LEFT);  break;
+            case 'KeyD': e.preventDefault(); bufferDirection(DIR.RIGHT); break;
+            
+            // 方向鍵：雙人模式為玩家2，單人模式為玩家1
+            case 'ArrowUp':    e.preventDefault(); gameMode === '2p' ? bufferP2Direction(DIR.UP)    : bufferDirection(DIR.UP);    break;
+            case 'ArrowDown':  e.preventDefault(); gameMode === '2p' ? bufferP2Direction(DIR.DOWN)  : bufferDirection(DIR.DOWN);  break;
+            case 'ArrowLeft':  e.preventDefault(); gameMode === '2p' ? bufferP2Direction(DIR.LEFT)  : bufferDirection(DIR.LEFT);  break;
+            case 'ArrowRight': e.preventDefault(); gameMode === '2p' ? bufferP2Direction(DIR.RIGHT) : bufferDirection(DIR.RIGHT); break;
+            case 'Space': case 'KeyP': e.preventDefault(); togglePause(); break;
+            case 'KeyH': e.preventDefault(); toggleHuntMode(); break;
+          }
+        } else if (gameState === 'paused') {
+          if (e.code === 'Space' || e.code === 'KeyP') {
+            e.preventDefault();
+            togglePause();
+          }
+        }
+      });
+    }
+
+    function bufferDirection(dir) {
+      if (!player) return;
+
+      // 取得「最後生效方向」用來做 180° 和重複檢查
+      const lastDir = directionBuffer.length > 0
+        ? directionBuffer[directionBuffer.length - 1]
+        : player.dir;
+
+      // 阻止 180° 反轉
+      if (lastDir.x + dir.x === 0 && lastDir.y + dir.y === 0) return;
+      // 阻止重複相同方向
+      if (lastDir.x === dir.x && lastDir.y === dir.y) return;
+
+      if (directionBuffer.length < 2) {
+        directionBuffer.push(dir);
+      } else {
+        // 第 3 次輸入：覆蓋第 2 格 (保留 L-turn 的第一步)
+        directionBuffer[1] = dir;
+      }
+
+      // ★ 關鍵改進：如果本 tick 尚未移動、且已等待超過 50% 間隔
+      //   → 立刻觸發移動，大幅降低體感延遲
+      const currentInterval = effects.SPEED
+        ? playerMoveInterval * 0.6
+        : playerMoveInterval;
+
+      if (!playerMovedThisTick && playerMoveTimer >= currentInterval * 0.5) {
+        executePlayerMove();
+      }
+    }
+
+    function setDirection(dx, dy) {
+      if (gameState !== 'playing') return;
+      bufferDirection({ x: dx, y: dy });
+    }
+
+    // 執行一次玩家蛇移動 (統一入口)
+    function executePlayerMove() {
+      playerMovedThisTick = true;
+      playerMoveTimer = 0;
+
+      // 從緩衝取方向
+      if (directionBuffer.length > 0) {
+        const newDir = directionBuffer.shift();
+        // 最終安全檢查
+        if (!(newDir.x + player.dir.x === 0 && newDir.y + player.dir.y === 0)) {
+          player.dir = newDir;
+        }
+      }
+
+      moveSnake(player);
+
+      // 造型特效 (移動時產生粒子)
+      if (player.skin === 'pegasus') {
+        spawnParticles(player.body[0].x * CELL + CELL/2, player.body[0].y * CELL + CELL/2, '#fef08a', 2);
+      } else if (player.skin === 'pterodactyl' && Math.random() > 0.5) {
+        spawnParticles(player.body[0].x * CELL + CELL/2, player.body[0].y * CELL + CELL/2, '#4d7c0f', 1);
+      } else if (player.skin === 'fire') {
+        spawnParticles(player.body[0].x * CELL + CELL/2, player.body[0].y * CELL + CELL/2, Math.random() > 0.5 ? '#ef4444' : '#f97316', 3);
+      } else if (player.skin === 'galaxy' && Math.random() > 0.3) {
+        spawnParticles(player.body[0].x * CELL + CELL/2, player.body[0].y * CELL + CELL/2, Math.random() > 0.5 ? '#d8b4fe' : '#ffffff', 2);
+      } else if (player.skin === 'thunder' && Math.random() > 0.4) {
+        spawnParticles(player.body[0].x * CELL + CELL/2, player.body[0].y * CELL + CELL/2, Math.random() > 0.5 ? '#38bdf8' : '#fef08a', 2);
+      }
+
+      if (checkCollisions()) {
+        gameOver();
+        return;
+      }
+
+      checkPlayerPickups();
+      updateMaxLength();
+    }
+
+    // ===== 玩家2 方向緩衝 =====
+    function bufferP2Direction(dir) {
+      if (!player2 || gameMode !== '2p') return;
+
+      const lastDir = p2DirectionBuffer.length > 0
+        ? p2DirectionBuffer[p2DirectionBuffer.length - 1]
+        : player2.dir;
+
+      if (lastDir.x + dir.x === 0 && lastDir.y + dir.y === 0) return;
+      if (lastDir.x === dir.x && lastDir.y === dir.y) return;
+
+      if (p2DirectionBuffer.length < 2) {
+        p2DirectionBuffer.push(dir);
+      } else {
+        p2DirectionBuffer[1] = dir;
+      }
+
+      if (!p2MovedThisTick && p2MoveTimer >= playerMoveInterval * 0.5) {
+        executeP2Move();
+      }
+    }
+
+    // ===== 玩家2 移動 =====
+    function executeP2Move() {
+      if (!player2) return;
+      p2MovedThisTick = true;
+      p2MoveTimer = 0;
+
+      if (p2DirectionBuffer.length > 0) {
+        const newDir = p2DirectionBuffer.shift();
+        if (!(newDir.x + player2.dir.x === 0 && newDir.y + player2.dir.y === 0)) {
+          player2.dir = newDir;
+        }
+      }
+
+      moveSnake(player2);
+
+      // 造型特效 (移動時產生粒子)
+      if (player2.skin === 'pegasus') {
+        spawnParticles(player2.body[0].x * CELL + CELL/2, player2.body[0].y * CELL + CELL/2, '#fef08a', 2);
+      } else if (player2.skin === 'pterodactyl' && Math.random() > 0.5) {
+        spawnParticles(player2.body[0].x * CELL + CELL/2, player2.body[0].y * CELL + CELL/2, '#4d7c0f', 1);
+      } else if (player2.skin === 'fire') {
+        spawnParticles(player2.body[0].x * CELL + CELL/2, player2.body[0].y * CELL + CELL/2, Math.random() > 0.5 ? '#ef4444' : '#f97316', 3);
+      } else if (player2.skin === 'galaxy' && Math.random() > 0.3) {
+        spawnParticles(player2.body[0].x * CELL + CELL/2, player2.body[0].y * CELL + CELL/2, Math.random() > 0.5 ? '#d8b4fe' : '#ffffff', 2);
+      } else if (player2.skin === 'thunder' && Math.random() > 0.4) {
+        spawnParticles(player2.body[0].x * CELL + CELL/2, player2.body[0].y * CELL + CELL/2, Math.random() > 0.5 ? '#38bdf8' : '#fef08a', 2);
+      }
+
+      if (checkP2Collisions()) {
+        gameOverP2Died();
+        return;
+      }
+
+      checkP2Pickups();
+    }
+
+    // ===== 觸控輸入 =====
+    function setupTouchInput() {
+      let touchStartX, touchStartY;
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (!touchStartX) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          setDirection(dx > 0 ? 1 : -1, 0);
+        } else {
+          setDirection(0, dy > 0 ? 1 : -1);
+        }
+      }, { passive: false });
+    }
+
+    // ===== 滑鼠控制 =====
+    // 玩家點擊畫面上的位置，蛇會朝該方向轉彎
+    let mouseEnabled = true;
+    function setupMouseInput() {
+      canvas.addEventListener('click', (e) => {
+        if (gameState !== 'playing' || !player) return;
+
+        // 取得點擊在 canvas 上的座標
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = CANVAS_W / rect.width;
+        const scaleY = CANVAS_H / rect.height;
+        const clickX = (e.clientX - rect.left) * scaleX;
+        const clickY = (e.clientY - rect.top) * scaleY;
+
+        // 蛇頭位置 (像素)
+        const headX = player.body[0].x * CELL + CELL / 2;
+        const headY = player.body[0].y * CELL + CELL / 2;
+
+        // 計算偏移
+        const dx = clickX - headX;
+        const dy = clickY - headY;
+
+        // 忽略點太近的 (避免誤觸)
+        if (Math.abs(dx) < CELL && Math.abs(dy) < CELL) return;
+
+        // 根據主要軸決定方向
+        if (Math.abs(dx) > Math.abs(dy)) {
+          bufferDirection(dx > 0 ? DIR.RIGHT : DIR.LEFT);
+        } else {
+          bufferDirection(dy > 0 ? DIR.DOWN : DIR.UP);
+        }
+      });
+
+      // 右鍵也可以操控（提供更快的連續點擊）
+      canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (gameState !== 'playing' || !player) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = CANVAS_W / rect.width;
+        const scaleY = CANVAS_H / rect.height;
+        const clickX = (e.clientX - rect.left) * scaleX;
+        const clickY = (e.clientY - rect.top) * scaleY;
+
+        const headX = player.body[0].x * CELL + CELL / 2;
+        const headY = player.body[0].y * CELL + CELL / 2;
+        const dx = clickX - headX;
+        const dy = clickY - headY;
+
+        if (Math.abs(dx) < CELL && Math.abs(dy) < CELL) return;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+          bufferDirection(dx > 0 ? DIR.RIGHT : DIR.LEFT);
+        } else {
+          bufferDirection(dy > 0 ? DIR.DOWN : DIR.UP);
+        }
+      });
+    }
+
+    // ===== 遊戲手把控制 (Gamepad API) =====
+    let gamepadIndex = null;
+    let gamepadPrevButtons = {}; // 追蹤按鈕狀態，防止連續觸發
+
+    function setupGamepadInput() {
+      window.addEventListener('gamepadconnected', (e) => {
+        gamepadIndex = e.gamepad.index;
+        console.log(`🎮 遊戲手把已連接: ${e.gamepad.id}`);
+      });
+
+      window.addEventListener('gamepaddisconnected', (e) => {
+        if (gamepadIndex === e.gamepad.index) {
+          gamepadIndex = null;
+          console.log('🎮 遊戲手把已斷開');
+        }
+      });
+    }
+
+    function pollGamepad() {
+      if (gamepadIndex === null) return;
+
+      const gamepads = navigator.getGamepads();
+      const gp = gamepads[gamepadIndex];
+      if (!gp) return;
+
+      // ---- D-Pad 按鈕 (標準映射) ----
+      // buttons[12]=上, [13]=下, [14]=左, [15]=右
+      const dpadMap = [
+        { index: 12, dir: DIR.UP },
+        { index: 13, dir: DIR.DOWN },
+        { index: 14, dir: DIR.LEFT },
+        { index: 15, dir: DIR.RIGHT },
+      ];
+
+      dpadMap.forEach(({ index, dir }) => {
+        if (gp.buttons[index]) {
+          const pressed = gp.buttons[index].pressed;
+          const wasPressed = gamepadPrevButtons[index] || false;
+          // 只在「剛按下」時觸發（防止長按連續輸入）
+          if (pressed && !wasPressed) {
+            if (gameState === 'playing') {
+              bufferDirection(dir);
+            }
+          }
+          gamepadPrevButtons[index] = pressed;
+        }
+      });
+
+      // ---- 左搖桿 ----
+      const axisX = gp.axes[0] || 0; // 左右
+      const axisY = gp.axes[1] || 0; // 上下
+      const deadzone = 0.5;
+
+      // 將搖桿偏移轉為方向（帶死區）
+      let stickDir = null;
+      if (Math.abs(axisX) > Math.abs(axisY)) {
+        if (axisX > deadzone) stickDir = DIR.RIGHT;
+        else if (axisX < -deadzone) stickDir = DIR.LEFT;
+      } else {
+        if (axisY > deadzone) stickDir = DIR.DOWN;
+        else if (axisY < -deadzone) stickDir = DIR.UP;
+      }
+
+      // 搖桿方向：只在方向改變時觸發
+      if (stickDir) {
+        const stickKey = `stick_${stickDir.x}_${stickDir.y}`;
+        if (!gamepadPrevButtons[stickKey]) {
+          if (gameState === 'playing') {
+            bufferDirection(stickDir);
+          }
+        }
+        gamepadPrevButtons[stickKey] = true;
+      } else {
+        // 搖桿回中，清除所有搖桿狀態
+        for (const key of Object.keys(gamepadPrevButtons)) {
+          if (key.startsWith('stick_')) delete gamepadPrevButtons[key];
+        }
+      }
+
+      // ---- 暫停按鈕 (Start/Options = buttons[9]) ----
+      if (gp.buttons[9]) {
+        const pressed = gp.buttons[9].pressed;
+        const wasPressed = gamepadPrevButtons[9] || false;
+        if (pressed && !wasPressed) {
+          if (gameState === 'playing' || gameState === 'paused') {
+            togglePause();
+          }
+        }
+        gamepadPrevButtons[9] = pressed;
+      }
+    }
+
+    let resumeCountdown = 0;
+
+    // ===== 暫停 =====
+    function togglePause() {
+      if (gameState === 'playing') {
+        gameState = 'paused';
+        document.getElementById('pause-overlay').style.display = 'flex';
+      } else if (gameState === 'paused' || gameState === 'resuming') {
+        gameState = 'resuming';
+        document.getElementById('pause-overlay').style.display = 'none';
+        resumeCountdown = 3000;
+        lastTimestamp = performance.now();
+      }
+    }
+
+    // ===== 追獵模式控制 =====
+    function startHuntMode() {
+      if (!ai) return;
+      aiHuntMode = true;
+      aiHuntTimer = HUNT_DURATION + Math.random() * 2000; // 追獵 4-6 秒
+      spawnParticles(ai.body[0].x * CELL + CELL / 2, ai.body[0].y * CELL + CELL / 2, '#ff0000', 10);
+    }
+
+    function toggleHuntMode() {
+      if (gameState !== 'playing') return;
+      if (aiHuntMode) {
+        aiHuntMode = false;
+        aiHuntTimer = 0;
+      } else {
+        startHuntMode();
+      }
+    }
+
+    // ===== 生成農莊裝飾 =====
+    function generateDecorations() {
+      decorations = [];
+      // 花朵
+      for (let i = 0; i < 20; i++) {
+        decorations.push({
+          type: 'flower',
+          x: Math.random() * CANVAS_W,
+          y: Math.random() * CANVAS_H,
+          color: ['#ff6b9d', '#ffd93d', '#6bcb77', '#fff', '#ff8fab'][Math.floor(Math.random() * 5)],
+          size: 3 + Math.random() * 4,
+        });
+      }
+      // 草叢
+      for (let i = 0; i < 15; i++) {
+        decorations.push({
+          type: 'grass',
+          x: Math.random() * CANVAS_W,
+          y: Math.random() * CANVAS_H,
+        });
+      }
+    }
+
+    // ===== 預渲染背景 =====
+    function renderBackground() {
+      const c = bgCtx;
+
+      // 草地底色 - 使用棋盤格紋理
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+          const isDark = (row + col) % 2 === 0;
+          c.fillStyle = isDark ? '#4a8c3f' : '#52963f';
+          c.fillRect(col * CELL, row * CELL, CELL, CELL);
+
+          // 隨機草地紋理
+          if (Math.random() < 0.15) {
+            c.fillStyle = isDark ? '#3f7d34' : '#5ca449';
+            c.fillRect(col * CELL + Math.random() * 10, row * CELL + Math.random() * 10,
+                       CELL * 0.4, CELL * 0.4);
+          }
+        }
+      }
+
+      // 農田行 (水平線，用於增加農莊感)
+      c.strokeStyle = 'rgba(60, 100, 50, 0.3)';
+      c.lineWidth = 1;
+      for (let row = 0; row < ROWS; row += 4) {
+        c.beginPath();
+        c.moveTo(0, row * CELL);
+        c.lineTo(CANVAS_W, row * CELL);
+        c.stroke();
+      }
+
+      // 裝飾 - 花朵
+      decorations.forEach(d => {
+        if (d.type === 'flower') {
+          c.fillStyle = d.color;
+          c.beginPath();
+          c.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+          c.fill();
+          c.fillStyle = '#4a7c39';
+          c.fillRect(d.x - 1, d.y + d.size, 2, d.size);
+        } else if (d.type === 'grass') {
+          c.strokeStyle = '#3a7a2f';
+          c.lineWidth = 1.5;
+          for (let j = 0; j < 3; j++) {
+            c.beginPath();
+            c.moveTo(d.x + j * 4, d.y + 8);
+            c.quadraticCurveTo(d.x + j * 4 - 2, d.y, d.x + j * 4 + (j - 1) * 3, d.y - 5);
+            c.stroke();
+          }
+        }
+      });
+
+      // 木柵欄邊框
+      drawFence(c);
+    }
+
+    function drawFence(c) {
+      const fw = 8; // 柵欄寬度
+      c.fillStyle = '#8B5A2B';
+
+      // 上下柵欄
+      c.fillRect(0, 0, CANVAS_W, fw);
+      c.fillRect(0, CANVAS_H - fw, CANVAS_W, fw);
+      // 左右柵欄
+      c.fillRect(0, 0, fw, CANVAS_H);
+      c.fillRect(CANVAS_W - fw, 0, fw, CANVAS_H);
+
+      // 柵欄紋理
+      c.fillStyle = '#A0522D';
+      c.fillRect(0, 0, CANVAS_W, 3);
+      c.fillRect(0, CANVAS_H - 3, CANVAS_W, 3);
+      c.fillRect(0, 0, 3, CANVAS_H);
+      c.fillRect(CANVAS_W - 3, 0, 3, CANVAS_H);
+
+      // 柵欄柱子
+      c.fillStyle = '#6B3A1F';
+      for (let i = 0; i < COLS; i += 3) {
+        c.fillRect(i * CELL, 0, 4, fw + 4);
+        c.fillRect(i * CELL, CANVAS_H - fw - 4, 4, fw + 4);
+      }
+      for (let i = 0; i < ROWS; i += 3) {
+        c.fillRect(0, i * CELL, fw + 4, 4);
+        c.fillRect(CANVAS_W - fw - 4, i * CELL, fw + 4, 4);
+      }
+
+      // 角落加強
+      c.fillStyle = '#5C3317';
+      const cs = 14;
+      c.fillRect(0, 0, cs, cs);
+      c.fillRect(CANVAS_W - cs, 0, cs, cs);
+      c.fillRect(0, CANVAS_H - cs, cs, cs);
+      c.fillRect(CANVAS_W - cs, CANVAS_H - cs, cs, cs);
+    }
+
+    // ===== 蛇物件 =====
+    function createSnake(startX, startY, dir, color, isPlayer, skin = null) {
+      const body = [];
+      for (let i = 0; i < 3; i++) {
+        body.push({ x: startX - dir.x * i, y: startY - dir.y * i });
+      }
+      return {
+        body,
+        dir,
+        color,
+        isPlayer,
+        grow: false,
+        skin,
+      };
+    }
+
+    // ===== 食物管理 =====
+    function spawnFood() {
+      if (foods.length >= MAX_FOODS) return;
+      const pos = getRandomFreeCell();
+      if (!pos) return;
+      const type = FOOD_TYPES[Math.floor(Math.random() * FOOD_TYPES.length)];
+      foods.push({ x: pos.x, y: pos.y, ...type });
+    }
+
+    function getRandomFreeCell() {
+      const occupied = new Set();
+      // 標記蛇的身體
+      if (player) player.body.forEach(s => occupied.add(`${s.x},${s.y}`));
+      if (ai) ai.body.forEach(s => occupied.add(`${s.x},${s.y}`));
+      if (player2) player2.body.forEach(s => occupied.add(`${s.x},${s.y}`));
+      // 標記食物
+      foods.forEach(f => occupied.add(`${f.x},${f.y}`));
+      // 標記道具
+      powerups.forEach(p => occupied.add(`${p.x},${p.y}`));
+
+      // 嘗試隨機找空位
+      for (let tries = 0; tries < 100; tries++) {
+        const x = Math.floor(Math.random() * COLS);
+        const y = Math.floor(Math.random() * ROWS);
+        if (!occupied.has(`${x},${y}`)) {
+          return { x, y };
+        }
+      }
+      return null;
+    }
+
+    // ===== 道具管理 =====
+    function spawnPowerup() {
+      const nonCoinPowerups = powerups.filter(p => p.type !== 'COIN').length;
+      if (nonCoinPowerups >= 3) return;
+      const pos = getRandomFreeCell();
+      if (!pos) return;
+
+      const types = Object.keys(POWERUP_TYPES).filter(t => t !== 'COIN');
+      const type = types[Math.floor(Math.random() * types.length)];
+      const info = POWERUP_TYPES[type];
+      powerups.push({
+        x: pos.x, y: pos.y,
+        type,
+        ...info,
+        spawnTime: gameTime,
+        pulsePhase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    function spawnCoin() {
+      const pos = getRandomFreeCell();
+      if (!pos) return;
+      powerups.push({
+        x: pos.x, y: pos.y,
+        type: 'COIN',
+        ...POWERUP_TYPES['COIN'],
+        spawnTime: gameTime,
+        pulsePhase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    function activateEffect(type) {
+      playSound('powerup');
+      applyScreenShake(300, 5);
+      applyHitstop(100);
+      const info = POWERUP_TYPES[type];
+      if (type === 'COIN') {
+        playSound('coin');
+        coins += 5;
+        score += 50;
+        spawnParticles(player.body[0].x * CELL + CELL / 2, player.body[0].y * CELL + CELL / 2, '#ffd700', 8);
+        return;
+      }
+      effects[type] = {
+        remaining: info.duration,
+        total: info.duration,
+        name: info.name,
+        cssClass: info.cssClass,
+      };
+      spawnParticles(player.body[0].x * CELL + CELL / 2, player.body[0].y * CELL + CELL / 2, info.color, 10);
+    }
+
+    // ===== 粒子效果 =====
+    function spawnParticles(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          life: 1,
+          decay: 0.015 + Math.random() * 0.02,
+          color,
+          size: 3 + Math.random() * 4,
+        });
+      }
+    }
+
+    // ====================================================
+    //  [修復 #2] 全新 AI 系統
+    //  問題: 舊 AI 只用 1 步貪心法，容易走進死路、行為呆板
+    //  解法:
+    //   1. BFS 最短路徑搜尋 (找食物/追玩家)
+    //   2. Flood Fill 安全檢查 (避免走入死胡同)
+    //   3. 追獵模式 (隨機切換目標為玩家，更有威脅性)
+    //   4. 多步前瞻 (評估移動後可用空間)
+    //   5. 優先遠離邊界 (減少被困風險)
+    // ====================================================
+
+    // 建立障礙物地圖 (用於 AI 尋路)
+    function buildObstacleSet(excludeTail) {
+      const obstacles = new Set();
+      // AI 自身 (可選排除尾巴，因為下一步尾巴會移走)
+      const aiEnd = excludeTail ? ai.body.length - 1 : ai.body.length;
+      for (let i = 1; i < aiEnd; i++) {
+        obstacles.add(`${ai.body[i].x},${ai.body[i].y}`);
+      }
+      // 玩家蛇身體
+      player.body.forEach(s => obstacles.add(`${s.x},${s.y}`));
+      // 玩家2 蛇身體
+      if (player2) player2.body.forEach(s => obstacles.add(`${s.x},${s.y}`));
+      return obstacles;
+    }
+
+    // 檢查格子是否可通行
+    function isCellFree(x, y, obstacles) {
+      if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+      return !obstacles.has(`${x},${y}`);
+    }
+
+    // BFS 搜尋到目標的最短路徑
+    function bfsPath(startX, startY, targetX, targetY, obstacles) {
+      if (startX === targetX && startY === targetY) return [];
+
+      const visited = new Set();
+      visited.add(`${startX},${startY}`);
+      // 每個節點記錄 {x, y, firstDir} — firstDir 是從起點走出的第一步方向
+      const queue = [];
+
+      for (const d of ALL_DIRS) {
+        const nx = startX + d.x;
+        const ny = startY + d.y;
+        const key = `${nx},${ny}`;
+        if (isCellFree(nx, ny, obstacles) && !visited.has(key)) {
+          visited.add(key);
+          if (nx === targetX && ny === targetY) return [d];
+          queue.push({ x: nx, y: ny, firstDir: d, dist: 1 });
+        }
+      }
+
+      let head = 0;
+      while (head < queue.length) {
+        const cur = queue[head++];
+        for (const d of ALL_DIRS) {
+          const nx = cur.x + d.x;
+          const ny = cur.y + d.y;
+          const key = `${nx},${ny}`;
+          if (isCellFree(nx, ny, obstacles) && !visited.has(key)) {
+            visited.add(key);
+            if (nx === targetX && ny === targetY) {
+              return [cur.firstDir]; // 回傳第一步方向即可
+            }
+            queue.push({ x: nx, y: ny, firstDir: cur.firstDir, dist: cur.dist + 1 });
+          }
+        }
+      }
+      return null; // 找不到路徑
+    }
+
+    // BFS 搜尋到最近的食物
+    function bfsToNearestFood(startX, startY, obstacles) {
+      const visited = new Set();
+      visited.add(`${startX},${startY}`);
+      const queue = [];
+
+      // 檢查起點是否就是食物
+      const startFood = foods.find(f => f.x === startX && f.y === startY);
+      if (startFood) return { dir: null, dist: 0, food: startFood };
+
+      for (const d of ALL_DIRS) {
+        const nx = startX + d.x;
+        const ny = startY + d.y;
+        const key = `${nx},${ny}`;
+        if (isCellFree(nx, ny, obstacles) && !visited.has(key)) {
+          visited.add(key);
+          const food = foods.find(f => f.x === nx && f.y === ny);
+          if (food) return { dir: d, dist: 1, food };
+          queue.push({ x: nx, y: ny, firstDir: d, dist: 1 });
+        }
+      }
+
+      let head = 0;
+      while (head < queue.length) {
+        const cur = queue[head++];
+        if (cur.dist > 60) break; // 限制搜尋深度，避免效能問題
+
+        for (const d of ALL_DIRS) {
+          const nx = cur.x + d.x;
+          const ny = cur.y + d.y;
+          const key = `${nx},${ny}`;
+          if (isCellFree(nx, ny, obstacles) && !visited.has(key)) {
+            visited.add(key);
+            const food = foods.find(f => f.x === nx && f.y === ny);
+            if (food) return { dir: cur.firstDir, dist: cur.dist + 1, food };
+            queue.push({ x: nx, y: ny, firstDir: cur.firstDir, dist: cur.dist + 1 });
+          }
+        }
+      }
+      return null;
+    }
+
+    // Flood Fill：計算從某點出發可到達的空格數量
+    function floodFillCount(startX, startY, obstacles) {
+      if (!isCellFree(startX, startY, obstacles)) return 0;
+
+      const visited = new Set();
+      const stack = [{ x: startX, y: startY }];
+      visited.add(`${startX},${startY}`);
+      let count = 0;
+      const maxCount = ai.body.length + 10; // 只要空間 > 蛇長就夠安全
+
+      while (stack.length > 0 && count < maxCount) {
+        const { x, y } = stack.pop();
+        count++;
+
+        for (const d of ALL_DIRS) {
+          const nx = x + d.x;
+          const ny = y + d.y;
+          const key = `${nx},${ny}`;
+          if (isCellFree(nx, ny, obstacles) && !visited.has(key)) {
+            visited.add(key);
+            stack.push({ x: nx, y: ny });
+          }
+        }
+      }
+      return count;
+    }
+
+    // AI 主要決策函式
+    function getAIDirection() {
+      const head = ai.body[0];
+      const obstacles = buildObstacleSet(true); // 排除尾巴 (下一步尾巴會移走，除非 grow)
+      if (ai.grow) {
+        // 如果正在成長，尾巴不會移走，加回障礙
+        const tail = ai.body[ai.body.length - 1];
+        obstacles.add(`${tail.x},${tail.y}`);
+      }
+
+      // 排除反向
+      const possible = ALL_DIRS.filter(d =>
+        !(d.x + ai.dir.x === 0 && d.y + ai.dir.y === 0)
+      );
+
+      // 篩選安全方向 (下一步不會死)
+      const safeDirs = possible.filter(d => {
+        const nx = head.x + d.x;
+        const ny = head.y + d.y;
+        return isCellFree(nx, ny, obstacles);
+      });
+
+      if (safeDirs.length === 0) {
+        // 完全沒有安全方向 → 只能硬走
+        return possible.length > 0 ? possible[0] : ai.dir;
+      }
+
+      if (safeDirs.length === 1) {
+        // 只有一個安全方向 → 別無選擇
+        return safeDirs[0];
+      }
+
+      // ---- 計算每個安全方向的 Flood Fill 分數 ----
+      const dirScores = safeDirs.map(d => {
+        const nx = head.x + d.x;
+        const ny = head.y + d.y;
+        const space = floodFillCount(nx, ny, obstacles);
+        return { dir: d, nx, ny, space };
+      });
+
+      // 排除會走入死路的方向 (空間 < 蛇身長度)
+      const viableDirs = dirScores.filter(ds => ds.space >= ai.body.length);
+      const candidates = viableDirs.length > 0 ? viableDirs : dirScores;
+
+      // ---- 決定目標：追食物 or 追玩家 ----
+
+      // 🔥 隨機追獵 (機率提升 5 倍)
+      const huntChance = Math.min(0.35, gameTime / 120000);
+      if (!aiHuntMode && Math.random() < huntChance * 0.1) {
+        startHuntMode();
+      }
+
+      // ⏱️ 定時追獵 (每 10 秒自動追獵一次)
+      aiHuntCycleTimer += aiBaseInterval / aiSpeedMultiplier;
+      if (!aiHuntMode && aiHuntCycleTimer >= HUNT_CYCLE_INTERVAL) {
+        aiHuntCycleTimer = 0;
+        startHuntMode();
+      }
+
+      // 追獵計時器倒數
+      if (aiHuntMode) {
+        aiHuntTimer -= aiBaseInterval / aiSpeedMultiplier;
+        if (aiHuntTimer <= 0) aiHuntMode = false;
+      }
+
+      let targetDir = null;
+
+      if (aiHuntMode) {
+        // === 追獵模式：追向玩家前方 (預測攔截) ===
+        const playerHead = player.body[0];
+        // 預測玩家 3 步後的位置
+        const predictX = Math.max(0, Math.min(COLS - 1, playerHead.x + player.dir.x * 3));
+        const predictY = Math.max(0, Math.min(ROWS - 1, playerHead.y + player.dir.y * 3));
+
+        const path = bfsPath(head.x, head.y, predictX, predictY, obstacles);
+        if (path && path.length > 0) {
+          const d = path[0];
+          const match = candidates.find(c => c.dir.x === d.x && c.dir.y === d.y);
+          if (match) targetDir = d;
+        }
+      }
+
+      if (!targetDir) {
+        // === 覓食模式：BFS 找最近的食物 ===
+        const result = bfsToNearestFood(head.x, head.y, obstacles);
+        if (result && result.dir) {
+          const d = result.dir;
+          const match = candidates.find(c => c.dir.x === d.x && c.dir.y === d.y);
+          if (match) targetDir = d;
+        }
+      }
+
+      if (targetDir) return targetDir;
+
+      // === 備選方案：選擇空間最大的方向 ===
+      // 加入邊界懲罰，偏好遠離邊緣
+      let bestCandidate = candidates[0];
+      let bestScore = -Infinity;
+
+      candidates.forEach(c => {
+        let score = c.space * 2;
+        // 遠離邊界獎勵
+        const distToWall = Math.min(c.nx, c.ny, COLS - 1 - c.nx, ROWS - 1 - c.ny);
+        score += distToWall * 1.5;
+        // 前方 2-3 步是否安全
+        for (let step = 1; step <= 3; step++) {
+          const fx = c.nx + c.dir.x * step;
+          const fy = c.ny + c.dir.y * step;
+          if (isCellFree(fx, fy, obstacles)) {
+            score += 2;
+          } else {
+            break;
+          }
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestCandidate = c;
+        }
+      });
+
+      return bestCandidate.dir;
+    }
+
+    // ===== 移動蛇 =====
+    function moveSnake(snake) {
+      const head = { ...snake.body[0] };
+      head.x += snake.dir.x;
+      head.y += snake.dir.y;
+      snake.body.unshift(head);
+      if (!snake.grow) {
+        snake.body.pop();
+      } else {
+        snake.grow = false;
+      }
+    }
+
+    // ===== P1 碰撞檢測 =====
+    function checkCollisions() {
+      const head = player.body[0];
+
+      // 撞牆
+      if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+        deathCause = '👑 玩家1 撞到了農莊的柵欄！🧱';
+        winner = 'P2';
+        return true;
+      }
+
+      // 撞自己
+      for (let i = 3; i < player.body.length; i++) {
+        if (head.x === player.body[i].x && head.y === player.body[i].y) {
+          deathCause = '👑 玩家1 咬到了自己的身體！😵';
+          winner = 'P2';
+          return true;
+        }
+      }
+
+      // 撞電腦蛇 (無敵狀態除外)
+      if (!effects.INVINCIBLE && ai) {
+        for (const seg of ai.body) {
+          if (head.x === seg.x && head.y === seg.y) {
+            deathCause = '👑 玩家1 撞到了電腦的金色蛇！🐍';
+            winner = 'P2';
+            return true;
+          }
+        }
+      }
+
+      // 撞玩家2 (雙人模式)
+      if (gameMode === '2p' && player2) {
+        for (const seg of player2.body) {
+          if (head.x === seg.x && head.y === seg.y) {
+            deathCause = '👑 玩家1 撞到了玩家2 的蛇！';
+            winner = 'P2';
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    // ===== 玩家吃食物/道具 =====
+    function checkPlayerPickups() {
+      const head = player.body[0];
+
+      // 檢查食物
+      for (let i = foods.length - 1; i >= 0; i--) {
+        if (foods[i].x === head.x && foods[i].y === head.y) {
+          const food = foods[i];
+          playSound('eat');
+          score += food.points;
+          player.grow = true;
+          spawnParticles(head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, '#22c55e', 6);
+          foods.splice(i, 1);
+          spawnFood();
+          break;
+        }
+      }
+
+      // 檢查道具
+      for (let i = powerups.length - 1; i >= 0; i--) {
+        if (powerups[i].x === head.x && powerups[i].y === head.y) {
+          activateEffect(powerups[i].type);
+          powerups.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    // ===== AI 吃食物 =====
+    function checkAIPickups() {
+      if (!ai) return;
+      const aiHead = ai.body[0];
+      for (let i = foods.length - 1; i >= 0; i--) {
+        if (foods[i].x === aiHead.x && foods[i].y === aiHead.y) {
+          ai.grow = true;
+          foods.splice(i, 1);
+          spawnFood();
+          break;
+        }
+      }
+    }
+
+    // ===== P2 碰撞檢測 =====
+    function checkP2Collisions() {
+      if (!player2) return false;
+      const head = player2.body[0];
+
+      // 撞牆
+      if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+        deathCause = '⭐ 玩家2 撞到了農莊的柵欄！🧱';
+        winner = 'P1';
+        return true;
+      }
+
+      // 撞自己
+      for (let i = 3; i < player2.body.length; i++) {
+        if (head.x === player2.body[i].x && head.y === player2.body[i].y) {
+          deathCause = '⭐ 玩家2 咬到了自己的身體！😵';
+          winner = 'P1';
+          return true;
+        }
+      }
+
+      // 撞電腦蛇
+      if (ai) {
+        for (const seg of ai.body) {
+          if (head.x === seg.x && head.y === seg.y) {
+            deathCause = '⭐ 玩家2 撞到了電腦的金色蛇！🐍';
+            winner = 'P1';
+            return true;
+          }
+        }
+      }
+
+      // 撞玩家1
+      for (const seg of player.body) {
+        if (head.x === seg.x && head.y === seg.y) {
+          deathCause = '⭐ 玩家2 撞到了玩家1 的蛇！';
+          winner = 'P1';
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    // ===== P2 吃食物/道具 =====
+    function checkP2Pickups() {
+      if (!player2) return;
+      const head = player2.body[0];
+
+      for (let i = foods.length - 1; i >= 0; i--) {
+        if (foods[i].x === head.x && foods[i].y === head.y) {
+          const food = foods[i];
+          playSound('eat');
+          score2 += food.points;
+          player2.grow = true;
+          spawnParticles(head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, selectedColor2, 6);
+          foods.splice(i, 1);
+          spawnFood();
+          break;
+        }
+      }
+
+      for (let i = powerups.length - 1; i >= 0; i--) {
+        if (powerups[i].x === head.x && powerups[i].y === head.y) {
+          // P2 吃到道具也有效果
+          const type = powerups[i].type;
+          if (type === 'COIN') {
+            playSound('coin');
+            coins += 5;
+            score2 += 50;
+          } else {
+            playSound('powerup');
+            applyScreenShake(200, 5);
+            applyHitstop(50);
+          }
+          powerups.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    // ===== P2 死亡 =====
+    function gameOverP2Died() {
+      // 雙人模式中 P2 死亡，P1 獲勝
+      gameOver();
+    }
+
+    // ===== 更新效果 =====
+    function updateEffects(dt) {
+      for (const key in effects) {
+        effects[key].remaining -= dt;
+        if (effects[key].remaining <= 0) {
+          delete effects[key];
+        }
+      }
+    }
+
+    // ===== 更新 HUD =====
+    function updateHUD() {
+      document.getElementById('hudScore').textContent = Math.floor(score);
+      document.getElementById('hudCoins').textContent = coins;
+      document.getElementById('hudLength').textContent = player.body.length;
+
+      const secs = Math.floor(gameTime / 1000);
+      const mins = Math.floor(secs / 60);
+      const s = secs % 60;
+      document.getElementById('hudTime').textContent = `${mins}:${s.toString().padStart(2, '0')}`;
+      document.getElementById('hudAISpeed').textContent = aiSpeedMultiplier.toFixed(1) + 'x';
+
+      // P2 HUD
+      if (gameMode === '2p' && player2) {
+        document.getElementById('hudP2Score').textContent = Math.floor(score2);
+        document.getElementById('hudP2Length').textContent = player2.body.length;
+      }
+
+      // 更新效果指示器
+      const container = document.getElementById('active-effects');
+      container.innerHTML = '';
+      for (const key in effects) {
+        const eff = effects[key];
+        const badge = document.createElement('span');
+        badge.className = `effect-badge ${eff.cssClass}`;
+        const remainSecs = Math.ceil(eff.remaining / 1000);
+        badge.textContent = `${eff.name} ${remainSecs}s`;
+        container.appendChild(badge);
+      }
+    }
+
+    // ===== 更新蛇長度記錄 =====
+    function updateMaxLength() {
+      if (player.body.length > maxLength) {
+        maxLength = player.body.length;
+      }
+    }
+
+    // ===== 主渲染 =====
+    function render() {
+      // 繪製預渲染背景
+      ctx.drawImage(bgCanvas, 0, 0);
+
+      // 動態呼吸光暈 (增強畫面質感)
+      const breathAlpha = 0.05 + 0.03 * Math.sin(gameTime / 1500);
+      ctx.fillStyle = `rgba(255, 255, 255, ${breathAlpha})`;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+      // 繪製食物
+      drawFoods();
+
+      // 繪製道具
+      drawPowerups();
+
+      // 繪製蛇
+      drawSnake(ai, false);
+      drawSnake(player, true);
+      // 繪製玩家2
+      if (gameMode === '2p' && player2) {
+        drawSnake(player2, true);
+      }
+
+      // 繪製粒子
+      drawParticles();
+
+      // 無敵效果 - 邊框閃爍
+      if (effects.INVINCIBLE) {
+        ctx.save();
+        const alpha = 0.3 + 0.2 * Math.sin(gameTime / 100);
+        ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, CANVAS_W - 6, CANVAS_H - 6);
+        ctx.restore();
+      }
+    }
+
+    function drawSnake(snake, isPlayer) {
+      if (!snake) return;
+      const body = snake.body;
+      const len = body.length;
+
+      body.forEach((seg, i) => {
+        const x = seg.x * CELL;
+        const y = seg.y * CELL;
+        const alpha = 1 - (i / len) * 0.4;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // 蛇身圓角矩形
+        const padding = i === 0 ? 1 : 2;
+        const radius = i === 0 ? 8 : 6;
+
+        if (isPlayer) {
+          // 判斷特殊造型
+          if (snake.skin === 'rainbow') {
+            const hue = (gameTime * 0.1 + i * 15) % 360;
+            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+          } else if (snake.skin === 'ghost') {
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha *= 0.4;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ffffff';
+          } else if (snake.skin === 'cyberpunk') {
+            ctx.fillStyle = '#111';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = i % 2 === 0 ? '#ff00ff' : '#00ffff';
+            ctx.strokeStyle = ctx.shadowColor;
+            ctx.lineWidth = 2;
+          } else if (snake.skin === 'pterodactyl') {
+            ctx.fillStyle = i % 2 === 0 ? '#4d7c0f' : '#3f6212';
+          } else if (snake.skin === 'pegasus') {
+            ctx.fillStyle = i === 0 ? '#ffffff' : '#fef08a';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#fef08a';
+          } else if (snake.skin === 'fire') {
+            ctx.fillStyle = i === 0 ? '#ffffff' : (i % 2 === 0 ? '#ef4444' : '#f97316');
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#ef4444';
+          } else if (snake.skin === 'galaxy') {
+            ctx.fillStyle = '#0f172a';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#c084fc';
+          } else if (snake.skin === 'thunder') {
+            ctx.fillStyle = i % 2 === 0 ? '#1e3a8a' : '#38bdf8';
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#fde047';
+          } else {
+            // 玩家蛇 - 使用選擇的顏色
+            ctx.fillStyle = snake.color;
+            // 無敵狀態閃爍
+            if (effects.INVINCIBLE && i === 0) {
+              const flash = Math.sin(gameTime / 80) > 0;
+              ctx.fillStyle = flash ? '#ffd700' : snake.color;
+            }
+          }
+        } else {
+          // 電腦蛇 - 金色
+          const goldGrad = ctx.createLinearGradient(x, y, x + CELL, y + CELL);
+          goldGrad.addColorStop(0, '#ffd700');
+          goldGrad.addColorStop(0.5, '#ffaa00');
+          goldGrad.addColorStop(1, '#ff8c00');
+          ctx.fillStyle = goldGrad;
+
+          // 冰凍效果
+          if (effects.FREEZE) {
+            ctx.fillStyle = '#8ec8ff';
+            ctx.globalAlpha *= 0.7;
+          }
+        }
+
+        roundRect(ctx, x + padding, y + padding, CELL - padding * 2, CELL - padding * 2, radius);
+        ctx.fill();
+        if (isPlayer && snake.skin === 'cyberpunk') ctx.stroke();
+
+        // 特殊造型附屬裝飾
+        if (isPlayer && snake.skin === 'pterodactyl' && i > 0 && i % 3 === 0) {
+           // 更加銳利的龍翼
+           ctx.fillStyle = '#1f2937'; // 鐵灰色翼膜
+           ctx.strokeStyle = '#4d7c0f';
+           ctx.lineWidth = 2;
+           ctx.beginPath();
+           if (snake.dir.x !== 0) {
+             ctx.moveTo(x + CELL/2, y);
+             ctx.lineTo(x + CELL/2 - 5, y - 15);
+             ctx.lineTo(x + CELL/2 - 15, y - 5);
+             ctx.moveTo(x + CELL/2, y + CELL);
+             ctx.lineTo(x + CELL/2 - 5, y + CELL + 15);
+             ctx.lineTo(x + CELL/2 - 15, y + CELL + 5);
+           } else {
+             ctx.moveTo(x, y + CELL/2);
+             ctx.lineTo(x - 15, y + CELL/2 - 5);
+             ctx.lineTo(x - 5, y + CELL/2 - 15);
+             ctx.moveTo(x + CELL, y + CELL/2);
+             ctx.lineTo(x + CELL + 15, y + CELL/2 - 5);
+             ctx.lineTo(x + CELL + 5, y + CELL/2 - 15);
+           }
+           ctx.fill();
+           ctx.stroke();
+        }
+
+        if (isPlayer && snake.skin === 'pegasus' && i > 0 && i % 4 === 0) {
+           // 天馬光翼 (層次感)
+           ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+           ctx.shadowBlur = 15;
+           ctx.shadowColor = '#fef08a';
+           ctx.beginPath();
+           if (snake.dir.x !== 0) {
+             ctx.ellipse(x + CELL/2, y - 5, 10, 4, Math.PI/4, 0, Math.PI*2);
+             ctx.ellipse(x + CELL/2, y + CELL + 5, 10, 4, -Math.PI/4, 0, Math.PI*2);
+           } else {
+             ctx.ellipse(x - 5, y + CELL/2, 4, 10, -Math.PI/4, 0, Math.PI*2);
+             ctx.ellipse(x + CELL + 5, y + CELL/2, 4, 10, Math.PI/4, 0, Math.PI*2);
+           }
+           ctx.fill();
+           ctx.shadowBlur = 0; // 恢復
+        }
+
+        if (isPlayer && snake.skin === 'thunder' && i > 0 && i % 3 === 0) {
+           // 雷霆電流
+           ctx.strokeStyle = '#fde047';
+           ctx.lineWidth = 2;
+           ctx.beginPath();
+           ctx.moveTo(x - 4, y + CELL/2);
+           ctx.lineTo(x + CELL/2, y - 4);
+           ctx.lineTo(x + CELL + 4, y + CELL/2);
+           ctx.lineTo(x + CELL/2, y + CELL + 4);
+           ctx.closePath();
+           ctx.stroke();
+        }
+        
+        if (isPlayer && snake.skin === 'galaxy' && i > 0) {
+           // 繁星點點
+           if ((i * 13) % 7 === 0) {
+             ctx.fillStyle = '#ffffff';
+             ctx.beginPath();
+             ctx.arc(x + CELL/2, y + CELL/2, 2, 0, Math.PI*2);
+             ctx.fill();
+           }
+        }
+
+        // 蛇頭特效
+        if (i === 0) {
+          // 眼睛
+          ctx.globalAlpha = 1;
+          const eyeSize = 3.5;
+          const eyeOffX = snake.dir.x === 0 ? 7 : (snake.dir.x > 0 ? 10 : 5);
+          const eyeOffY = snake.dir.y === 0 ? 7 : (snake.dir.y > 0 ? 10 : 5);
+          const eyeOffX2 = snake.dir.x === 0 ? CELL - 7 - eyeSize : eyeOffX;
+          const eyeOffY2 = snake.dir.y === 0 ? CELL - 7 - eyeSize : eyeOffY;
+
+          // 眼白
+          ctx.fillStyle = 'white';
+          ctx.beginPath();
+          ctx.arc(x + eyeOffX + 1, y + eyeOffY + 1, eyeSize + 1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x + eyeOffX2 + 1, y + eyeOffY2 + 1, eyeSize + 1, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 瞳孔
+          ctx.fillStyle = '#111';
+          ctx.beginPath();
+          ctx.arc(x + eyeOffX + 1 + snake.dir.x * 1.5, y + eyeOffY + 1 + snake.dir.y * 1.5, eyeSize * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x + eyeOffX2 + 1 + snake.dir.x * 1.5, y + eyeOffY2 + 1 + snake.dir.y * 1.5, eyeSize * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 蛇頭額外裝飾 (角/冠)
+          if (isPlayer && snake.skin === 'pterodactyl') {
+             ctx.fillStyle = '#7f1d1d';
+             ctx.beginPath();
+             if (snake.dir.x !== 0) {
+               ctx.moveTo(x + CELL/2, y);
+               ctx.lineTo(x + CELL/2 - 12*snake.dir.x, y - 8);
+               ctx.lineTo(x + CELL/2 - 6*snake.dir.x, y);
+             } else {
+               ctx.moveTo(x, y + CELL/2);
+               ctx.lineTo(x - 8, y + CELL/2 - 12*snake.dir.y);
+               ctx.lineTo(x, y + CELL/2 - 6*snake.dir.y);
+             }
+             ctx.fill();
+          }
+
+          if (isPlayer && snake.skin === 'pegasus') {
+             ctx.fillStyle = '#fde047';
+             ctx.shadowBlur = 15;
+             ctx.shadowColor = '#fde047';
+             ctx.beginPath();
+             const cx = x + CELL/2;
+             const cy = y + CELL/2;
+             ctx.moveTo(cx + 6*snake.dir.x - 3*snake.dir.y, cy + 6*snake.dir.y - 3*snake.dir.x);
+             ctx.lineTo(cx + 6*snake.dir.x + 3*snake.dir.y, cy + 6*snake.dir.y + 3*snake.dir.x);
+             ctx.lineTo(cx + 18*snake.dir.x, cy + 18*snake.dir.y);
+             ctx.fill();
+             ctx.shadowBlur = 0;
+          }
+
+          if (isPlayer && snake.skin === 'fire') {
+             ctx.fillStyle = '#f97316';
+             ctx.beginPath();
+             ctx.arc(x + CELL/2, y + CELL/2, 8, 0, Math.PI*2);
+             ctx.fill();
+             ctx.fillStyle = '#ef4444';
+             ctx.beginPath();
+             ctx.arc(x + CELL/2, y + CELL/2, 4, 0, Math.PI*2);
+             ctx.fill();
+          }
+
+          // 玩家蛇頭上的標記
+          if (isPlayer) {
+            const icon = (snake === player) ? '👑' : '⭐';
+            ctx.save();
+            ctx.font = '18px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(icon, x + CELL / 2, y - 4);
+            ctx.restore();
+          }
+
+          // AI 蛇的標記 (追獵模式顯示不同圖示)
+          if (!isPlayer) {
+            ctx.font = '14px "Noto Sans TC"';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText(aiHuntMode ? '😈' : '🤖', x + CELL / 2, y - 3);
+          }
+        }
+
+        ctx.restore();
+      });
+    }
+
+    function drawCrown(c, cx, cy) {
+      c.save();
+      c.font = '18px serif';
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText('👑', cx, cy);
+      c.restore();
+    }
+
+    function drawFoods() {
+      foods.forEach(food => {
+        const x = food.x * CELL + CELL / 2;
+        const y = food.y * CELL + CELL / 2;
+
+        // 食物光環
+        ctx.save();
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, CELL * 0.6);
+        glow.addColorStop(0, 'rgba(255, 255, 200, 0.15)');
+        glow.addColorStop(1, 'rgba(255, 255, 200, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(food.x * CELL - 4, food.y * CELL - 4, CELL + 8, CELL + 8);
+
+        // Emoji
+        ctx.font = `${CELL - 6}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(food.emoji, x, y + 1);
+        ctx.restore();
+      });
+    }
+
+    function drawPowerups() {
+      powerups.forEach(pu => {
+        const x = pu.x * CELL + CELL / 2;
+        const y = pu.y * CELL + CELL / 2;
+        const pulse = Math.sin((gameTime + pu.pulsePhase * 1000) / 300) * 0.15 + 0.85;
+
+        ctx.save();
+
+        // 光環效果
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, CELL * 0.8);
+        glow.addColorStop(0, pu.color + '40');
+        glow.addColorStop(1, pu.color + '00');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, CELL * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 背景圓
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.arc(x, y, CELL * 0.42 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Emoji
+        ctx.globalAlpha = pulse;
+        ctx.font = `${(CELL - 4) * pulse}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(pu.emoji, x, y + 1);
+
+        ctx.restore();
+      });
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    // ===== 圓角矩形輔助 =====
+    function roundRect(c, x, y, w, h, r) {
+      c.beginPath();
+      c.moveTo(x + r, y);
+      c.arcTo(x + w, y, x + w, y + h, r);
+      c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r);
+      c.arcTo(x, y, x + w, y, r);
+      c.closePath();
+    }
+
+    // ===== 倒數計時渲染 =====
+    function renderCountdown() {
+      ctx.drawImage(bgCanvas, 0, 0);
+
+      // 繪製蛇初始位置
+      drawSnake(ai, false);
+      drawSnake(player, true);
+      if (gameMode === '2p' && player2) drawSnake(player2, true);
+      drawFoods();
+
+      // 半透明覆蓋
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+      // 倒數數字
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      const text = countdownValue > 0 ? countdownValue.toString() : '開始！';
+      const scale = 1 + (1 - (countdownTimer % 1000) / 1000) * 0.3;
+
+      ctx.font = `bold ${80 * scale}px "Noto Sans TC"`;
+      ctx.fillStyle = countdownValue > 0 ? '#ffd700' : '#22c55e';
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowBlur = 30;
+      ctx.fillText(text, CANVAS_W / 2, CANVAS_H / 2);
+      ctx.restore();
+    }
+
+    // ===== 遊戲主循環 =====
+    function gameLoop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = Math.min(timestamp - lastTimestamp, 100); // 限制最大 delta
+      lastTimestamp = timestamp;
+
+      if (hitstopTime > 0) {
+        hitstopTime -= dt;
+        animFrameId = requestAnimationFrame(gameLoop);
+        return;
+      }
+
+      if (gameState === 'countdown') {
+        countdownTimer += dt;
+        if (countdownTimer >= 1000) {
+          countdownTimer -= 1000;
+          countdownValue--;
+          if (countdownValue < 0) {
+            gameState = 'playing';
+          }
+        }
+        renderCountdown();
+      } else if (gameState === 'resuming') {
+        resumeCountdown -= dt;
+        if (resumeCountdown <= 0) {
+          gameState = 'playing';
+        }
+        render();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = '#fff';
+        ctx.font = '80px "Noto Sans TC"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(Math.ceil(resumeCountdown / 1000), CANVAS_W / 2, CANVAS_H / 2);
+      } else if (gameState === 'playing') {
+        pollGamepad(); // 每幀輪詢手把狀態
+        update(dt);
+
+        ctx.save();
+        if (screenShakeTime > 0) {
+          screenShakeTime -= dt;
+          const dx = (Math.random() - 0.5) * screenShakeMagnitude;
+          const dy = (Math.random() - 0.5) * screenShakeMagnitude;
+          ctx.translate(dx, dy);
+        }
+        render();
+        ctx.restore();
+
+        updateHUD();
+      } else if (gameState === 'paused') {
+        // 不更新，只重繪
+        render();
+      }
+
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function update(dt) {
+      gameTime += dt;
+
+      // 更新 AI 速度 (每15秒加速)
+      aiSpeedMultiplier = 1.0 + Math.floor(gameTime / 15000) * 0.15;
+      if (aiSpeedMultiplier > 3.5) aiSpeedMultiplier = 3.5; // 速度上限
+
+      // 更新效果
+      updateEffects(dt);
+
+      // 計算移動間隔
+      let playerInterval = playerMoveInterval;
+      if (effects.SPEED) playerInterval *= 0.6; // 加速道具
+
+      let aiInterval = aiBaseInterval / aiSpeedMultiplier;
+      if (effects.FREEZE) aiInterval = Infinity; // 冰凍
+      if (effects.SLOW) aiInterval *= 2; // 減速
+
+      // ---- P1 移動 ----
+      playerMovedThisTick = false;
+      playerMoveTimer += dt;
+      if (playerMoveTimer >= playerInterval) {
+        executePlayerMove();
+        if (gameState === 'gameover') return;
+      }
+
+      // ---- P2 移動 (雙人模式) ----
+      if (gameMode === '2p' && player2) {
+        p2MovedThisTick = false;
+        p2MoveTimer += dt;
+        if (p2MoveTimer >= playerInterval) {
+          executeP2Move();
+          if (gameState === 'gameover') return;
+        }
+      }
+
+      // ---- AI 移動 ----
+      if (ai && aiInterval !== Infinity) {
+        aiMoveTimer += dt;
+        if (aiMoveTimer >= aiInterval) {
+          aiMoveTimer = 0;
+          ai.dir = getAIDirection();
+          moveSnake(ai);
+
+          const aiHead = ai.body[0];
+          if (aiHead.x < 0 || aiHead.x >= COLS || aiHead.y < 0 || aiHead.y >= ROWS ||
+              ai.body.some((s, i) => i > 0 && s.x === aiHead.x && s.y === aiHead.y)) {
+            respawnAI();
+          }
+
+          checkAIPickups();
+        }
+      }
+
+      // 食物生成
+      while (foods.length < MAX_FOODS) {
+        spawnFood();
+      }
+
+      // 金幣生成 (永遠維持場上有 5 個金幣)
+      const coinCount = powerups.filter(p => p.type === 'COIN').length;
+      if (coinCount < 5) {
+        spawnCoin();
+      }
+
+      // 其他道具生成
+      powerupSpawnTimer += dt;
+      if (powerupSpawnTimer >= POWERUP_SPAWN_INTERVAL) {
+        powerupSpawnTimer = 0;
+        spawnPowerup();
+      }
+
+      // 更新粒子
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1; // 重力
+        p.life -= p.decay;
+      });
+      particles = particles.filter(p => p.life > 0);
+
+      // 分數隨時間增長
+      score += dt * 0.003;
+    }
+
+    // ===== AI 重生 =====
+    function respawnAI() {
+      // 在遠離玩家的位置重生
+      let bestPos = { x: COLS - 5, y: ROWS - 5 };
+      let bestDist = 0;
+
+      for (let tries = 0; tries < 20; tries++) {
+        const x = 3 + Math.floor(Math.random() * (COLS - 6));
+        const y = 3 + Math.floor(Math.random() * (ROWS - 6));
+        const dist = Math.abs(x - player.body[0].x) + Math.abs(y - player.body[0].y);
+        if (dist > bestDist) {
+          bestDist = dist;
+          bestPos = { x, y };
+        }
+      }
+
+      ai = createSnake(bestPos.x, bestPos.y, DIR.LEFT, '#ffd700', false);
+      aiHuntMode = false;
+    }
+
+    // ===== 遊戲結束 =====
+    function gameOver() {
+      playSound('gameover');
+      applyScreenShake(500, 15);
+      applyHitstop(200);
+      gameState = 'gameover';
+      cancelAnimationFrame(animFrameId);
+
+      // 死亡特效
+      player.body.forEach((seg, i) => {
+        setTimeout(() => {
+          spawnParticles(seg.x * CELL + CELL / 2, seg.y * CELL + CELL / 2, selectedColor, 4);
+        }, i * 50);
+      });
+
+      // 最後一幀渲染（含粒子）
+      let deathAnim = 0;
+      const deathLoop = () => {
+        deathAnim++;
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.1;
+          p.life -= p.decay;
+        });
+        particles = particles.filter(p => p.life > 0);
+        render();
+
+        // 紅色閃爍
+        ctx.fillStyle = `rgba(255, 0, 0, ${0.3 * Math.max(0, 1 - deathAnim / 15)})`;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+        if (deathAnim < 40) {
+          requestAnimationFrame(deathLoop);
+        } else {
+          showGameOver();
+        }
+      };
+      deathLoop();
+    }
+
+    function showGameOver() {
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('gameover-screen').style.display = 'flex';
+
+      document.getElementById('gameoverCause').textContent = deathCause;
+      document.getElementById('finalScore').textContent = Math.floor(score);
+      document.getElementById('finalCoins').textContent = coins;
+      document.getElementById('finalLength').textContent = maxLength;
+
+      let isNewRecord = false;
+      if (gameMode === '1p') {
+        isNewRecord = saveLeaderboard('1p', score);
+      } else {
+        isNewRecord = saveLeaderboard('2p', Math.max(score, score2));
+      }
+
+      if (isNewRecord) {
+        document.getElementById('finalScore').innerHTML = `${Math.floor(score)} <span style="color:#ffd700; font-weight:bold; font-size:0.8em; text-shadow:0 0 10px #ffd700;">(新高分！👑)</span>`;
+        playSound('buy');
+      }
+
+      const secs = Math.floor(gameTime / 1000);
+      const mins = Math.floor(secs / 60);
+      const s = secs % 60;
+      document.getElementById('finalTime').textContent = `${mins}:${s.toString().padStart(2, '0')}`;
+
+      // 雙人模式顯示贏家
+      if (gameMode === '2p') {
+        document.getElementById('gameoverTitle').textContent = '🏆 對戰結果';
+        const banner = document.getElementById('winnerBanner');
+        banner.style.display = 'block';
+        banner.textContent = winner === 'P1' ? '👑 玩家1 獲勝！' : '⭐ 玩家2 獲勝！';
+        document.getElementById('finalP2Card').style.display = 'block';
+        document.getElementById('finalP2Score').textContent = Math.floor(score2);
+      } else {
+        document.getElementById('gameoverTitle').textContent = '💀 遊戲結束';
+        document.getElementById('winnerBanner').style.display = 'none';
+        document.getElementById('finalP2Card').style.display = 'none';
+      }
+
+      // 結算金幣並存檔
+      totalCoins += coins;
+      saveShopData();
+    }
+
+    // ===== 開始遊戲 =====
+    function startGame() {
+      initAudio();
+      playSound('click');
+      // 重置狀態
+      score = 0;
+      score2 = 0;
+      coins = 0;
+      maxLength = 3;
+      gameTime = 0;
+      lastTimestamp = 0;
+      playerMoveTimer = 0;
+      aiMoveTimer = 0;
+      p2MoveTimer = 0;
+      aiSpeedMultiplier = 1.0;
+      powerupSpawnTimer = 0;
+      foods = [];
+      powerups = [];
+      particles = [];
+      effects = {};
+      directionBuffer = [];
+      p2DirectionBuffer = [];
+      deathCause = '';
+      winner = '';
+      playerMovedThisTick = false;
+      p2MovedThisTick = false;
+      aiHuntMode = false;
+      aiHuntTimer = 0;
+      aiHuntCycleTimer = 0;
+
+      // 建立蛇
+      player = createSnake(5, Math.floor(ROWS / 2), DIR.RIGHT, selectedColor, true, selectedSkin1);
+
+      if (gameMode === '2p') {
+        // 雙人模式: 雙方對戰，沒有 AI
+        player2 = createSnake(COLS - 6, Math.floor(ROWS / 2), DIR.LEFT, selectedColor2, true, selectedSkin2);
+        ai = null;
+      } else {
+        // 單人模式
+        player2 = null;
+        ai = createSnake(COLS - 6, Math.floor(ROWS / 2), DIR.LEFT, '#ffd700', false);
+      }
+
+      // 生成裝飾和背景
+      generateDecorations();
+      renderBackground();
+
+      // 生成食物
+      for (let i = 0; i < MAX_FOODS; i++) {
+        spawnFood();
+      }
+
+      // 生成一個初始道具
+      spawnPowerup();
+
+      // 切換畫面
+      document.getElementById('menu-screen').style.display = 'none';
+      document.getElementById('gameover-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'flex';
+      document.getElementById('pause-overlay').style.display = 'none';
+
+      // 雙人 HUD 顯示控制
+      document.getElementById('hudP2Row').style.display = gameMode === '2p' ? 'flex' : 'none';
+      document.getElementById('hudAIRow').style.display = gameMode === '1p' ? 'flex' : 'none';
+
+      // 開始倒數
+      gameState = 'countdown';
+      countdownValue = 3;
+      countdownTimer = 0;
+      lastTimestamp = 0;
+
+      // 更新 HUD
+      updateHUD();
+
+      // 開始遊戲循環
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // ===== 回主選單 =====
+    function showMenu() {
+      gameState = 'menu';
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      document.getElementById('game-screen').style.display = 'none';
+      document.getElementById('gameover-screen').style.display = 'none';
+      document.getElementById('pause-overlay').style.display = 'none';
+      renderLeaderboard(); // 更新排行榜顯示
+      document.getElementById('menu-screen').style.display = 'flex';
+    }
+
+    // ===== 啟動 =====
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
